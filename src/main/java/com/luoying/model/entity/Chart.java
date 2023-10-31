@@ -45,6 +45,11 @@ public class Chart implements Serializable {
     private String genSummary;
 
     /**
+     * 创建者id
+     */
+    private Long userId;
+
+    /**
      * 创建时间
      */
     private Date createTime;
