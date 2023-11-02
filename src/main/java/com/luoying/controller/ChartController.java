@@ -10,24 +10,25 @@ import com.luoying.common.ResultUtils;
 import com.luoying.constant.UserConstant;
 import com.luoying.exception.BusinessException;
 import com.luoying.exception.ThrowUtils;
-import com.luoying.model.dto.chart.ChartAddRequest;
-import com.luoying.model.dto.chart.ChartEditRequest;
-import com.luoying.model.dto.chart.ChartQueryRequest;
-import com.luoying.model.dto.chart.ChartUpdateRequest;
+import com.luoying.manager.AIManager;
+import com.luoying.model.dto.chart.*;
 import com.luoying.model.entity.Chart;
 import com.luoying.model.entity.User;
+import com.luoying.model.vo.BIResponse;
 import com.luoying.service.ChartService;
 import com.luoying.service.UserService;
+import com.luoying.utils.ExcelUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 /**
  * 帖子接口
- *
  */
 @RestController
 @RequestMapping("/chart")
@@ -39,6 +40,9 @@ public class ChartController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AIManager aiManager;
 
     private final static Gson GSON = new Gson();
 
@@ -140,7 +144,7 @@ public class ChartController {
      */
     @PostMapping("/list/page")
     public BaseResponse<Page<Chart>> listChartVOByPage(@RequestBody ChartQueryRequest chartQueryRequest,
-            HttpServletRequest request) {
+                                                       HttpServletRequest request) {
         long current = chartQueryRequest.getCurrent();
         long size = chartQueryRequest.getPageSize();
         // 限制爬虫
@@ -159,7 +163,7 @@ public class ChartController {
      */
     @PostMapping("/my/list/page")
     public BaseResponse<Page<Chart>> listMyChartVOByPage(@RequestBody ChartQueryRequest chartQueryRequest,
-            HttpServletRequest request) {
+                                                         HttpServletRequest request) {
         if (chartQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -203,4 +207,63 @@ public class ChartController {
         return ResultUtils.success(result);
     }
 
+    /**
+     * 智能分析
+     *
+     * @param multipartFile
+     * @param genChartRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/gen")
+    public BaseResponse<BIResponse> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
+                                                 GenChartRequest genChartRequest, HttpServletRequest request) {
+        String goal = genChartRequest.getGoal();
+        String chartType = genChartRequest.getChartType();
+        String chartName = genChartRequest.getChartName();
+        //拼接分析目标
+        if (StringUtils.isNotBlank(chartType)) {
+            goal = goal + "，请使用" + chartType;
+        }
+        // 校验
+        ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标为空");
+        ThrowUtils.throwIf(StringUtils.isNotBlank(chartName) && chartName.length() > 128, ErrorCode.PARAMS_ERROR, "图表名称过长");
+        // 获取登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 用户输入
+        StringBuilder userInput = new StringBuilder();
+        userInput.append("分析需求：").append("\n");
+        userInput.append(goal).append("\n");
+        // 压缩后的数据
+        String data = ExcelUtils.excelToCsv(multipartFile);
+        userInput.append("原始数据：").append("\n");
+        userInput.append(data).append("\n");
+        // 输入数据给AI
+        long biModelId = 1719916921023344642L;
+        String answer = aiManager.doChat(biModelId, userInput.toString());
+        // 处理AI返回的数据
+        String[] splits = answer.split("【【【【【");
+        if (splits.length < 3) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI生成错误");
+        }
+        String genChart = splits[1].trim();
+        String genSummary = splits[2].trim();
+        // 插入数据库
+        Chart chart = new Chart();
+        chart.setGoal(goal);
+        chart.setRawData(data);
+        chart.setChartType(chartType);
+        chart.setChartName(chartName);
+        chart.setGenChart(genChart);
+        chart.setGenSummary(genSummary);
+        chart.setUserId(loginUser.getId());
+        boolean save = chartService.save(chart);
+        ThrowUtils.throwIf(!save, ErrorCode.SYSTEM_ERROR, "图表保存失败");
+        // 返回给前端
+        BIResponse biResponse = new BIResponse();
+        biResponse.setGenChart(genChart);
+        biResponse.setGenSummary(genSummary);
+        biResponse.setChartId(chart.getId());
+        return ResultUtils.success(biResponse);
+    }
 }

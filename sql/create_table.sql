@@ -29,6 +29,7 @@ create table if not exists chart
     goal       text                               null comment '分析目标',
     rawData    text                               null comment '原始数据',
     chartType  varchar(128)                       null comment '图表类型',
+    chartName  varchar(128)                       null comment '图表名称',
     genChart   text                               null comment 'AI生成的图表数据',
     genSummary text                               null comment 'AI生成的分析总结',
     userId     bigint                             null comment '创建人id',

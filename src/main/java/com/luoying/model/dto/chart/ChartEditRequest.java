@@ -30,5 +30,10 @@ public class ChartEditRequest implements Serializable {
      */
     private String chartType;
 
+    /**
+     * 图表名称
+     */
+    private String chartName;
+
     private static final long serialVersionUID = 1L;
 }
