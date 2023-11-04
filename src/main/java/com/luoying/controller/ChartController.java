@@ -12,6 +12,7 @@ import com.luoying.constant.UserConstant;
 import com.luoying.exception.BusinessException;
 import com.luoying.exception.ThrowUtils;
 import com.luoying.manager.AIManager;
+import com.luoying.manager.RedisLimiterManager;
 import com.luoying.model.dto.chart.*;
 import com.luoying.model.entity.Chart;
 import com.luoying.model.entity.User;
@@ -46,6 +47,9 @@ public class ChartController {
 
     @Resource
     private AIManager aiManager;
+
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
 
     private final static Gson GSON = new Gson();
 
@@ -243,6 +247,8 @@ public class ChartController {
         ThrowUtils.throwIf(validFileSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀不符合要求");
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
+        // 限流,每个用户一个限流器
+        redisLimiterManager.doRateLimit("genChartByAI_"+loginUser.getId().toString());
         // 压缩原始数据
         String data = ExcelUtils.excelToCsv(multipartFile);
         // 构造用户请求（分析目标，图表名称，图表类型，csv数据）

@@ -7,10 +7,11 @@ import com.yupi.yucongming.dev.common.BaseResponse;
 import com.yupi.yucongming.dev.model.DevChatRequest;
 import com.yupi.yucongming.dev.model.DevChatResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-@Component
+@Service
 public class AIManager {
     @Resource
     private YuCongMingClient yuCongMingClient;
