@@ -244,7 +244,7 @@ public class ChartController {
         // 校验文件后缀
         String suffix = FileUtil.getSuffix(originalFilename);
         final List<String> validFileSuffix = Arrays.asList("xlsx");
-        ThrowUtils.throwIf(validFileSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀不符合要求");
+        ThrowUtils.throwIf(!validFileSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀不符合要求");
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
         // 限流,每个用户一个限流器
