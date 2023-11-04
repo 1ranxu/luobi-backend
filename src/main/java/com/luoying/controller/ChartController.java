@@ -1,5 +1,6 @@
 package com.luoying.controller;
 
+import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
 import com.luoying.annotation.AuthCheck;
@@ -26,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 帖子接口
@@ -221,27 +224,37 @@ public class ChartController {
         String goal = genChartRequest.getGoal();
         String chartType = genChartRequest.getChartType();
         String chartName = genChartRequest.getChartName();
-        //拼接分析目标
+        // 拼接分析目标
         if (StringUtils.isNotBlank(chartType)) {
             goal = goal + "，请使用" + chartType;
         }
-        // 校验
+        // 校验参数
         ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标为空");
         ThrowUtils.throwIf(StringUtils.isNotBlank(chartName) && chartName.length() > 128, ErrorCode.PARAMS_ERROR, "图表名称过长");
+        // 校验文件
+        long size = multipartFile.getSize();
+        String originalFilename = multipartFile.getOriginalFilename();
+        // 校验文件大小
+        final long ONE_MB = 1024 * 1024L;
+        ThrowUtils.throwIf(size > ONE_MB, ErrorCode.PARAMS_ERROR, "文件大小超过 1M");
+        // 校验文件后缀
+        String suffix = FileUtil.getSuffix(originalFilename);
+        final List<String> validFileSuffix = Arrays.asList("xlsx");
+        ThrowUtils.throwIf(validFileSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀不符合要求");
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
-        // 用户输入
+        // 压缩原始数据
+        String data = ExcelUtils.excelToCsv(multipartFile);
+        // 构造用户请求（分析目标，图表名称，图表类型，csv数据）
         StringBuilder userInput = new StringBuilder();
         userInput.append("分析需求：").append("\n");
         userInput.append(goal).append("\n");
-        // 压缩后的数据
-        String data = ExcelUtils.excelToCsv(multipartFile);
         userInput.append("原始数据：").append("\n");
         userInput.append(data).append("\n");
-        // 输入数据给AI
+        // 调用鱼聪明SDK，得到响应
         long biModelId = 1719916921023344642L;
         String answer = aiManager.doChat(biModelId, userInput.toString());
-        // 处理AI返回的数据
+        // 从AI响应结果中，取出需要的数据
         String[] splits = answer.split("【【【【【");
         if (splits.length < 3) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI生成错误");

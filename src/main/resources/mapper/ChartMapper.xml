@@ -18,6 +18,10 @@
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
+    <select id="queryChartData" parameterType="string" resultType="map">
+        ${querySql}
+    </select>
+
     <sql id="Base_Column_List">
         id,goal,rawData,
         chartType,chartName,genChart,genSummary,

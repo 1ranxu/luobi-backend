@@ -2,6 +2,10 @@ package com.luoying.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.luoying.model.entity.Chart;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Map;
 
 /**
 * @author 落樱的悔恨
@@ -10,7 +14,7 @@ import com.luoying.model.entity.Chart;
 * @Entity generator.domain.Chart
 */
 public interface ChartMapper extends BaseMapper<Chart> {
-
+    List<Map<String, Object>> queryChartData(@Param("querySql") String querySql);
 }
 
 
