@@ -10,7 +10,11 @@ public class BIMessageProducer {
     @Resource
     private RabbitTemplate rabbitTemplate;
 
-    public void sendMessage(String exchange,String routingKey,String messgae){
-        rabbitTemplate.convertAndSend(exchange,routingKey,messgae);
+    /**
+     * 发送消息
+     * @param messgae
+     */
+    public void sendMessage(String messgae){
+        rabbitTemplate.convertAndSend(BIMQConstant.BI_EXCHANGE_NAME,BIMQConstant.BI_ROUTING_KEY,messgae);
     }
 }
