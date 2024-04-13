@@ -230,8 +230,8 @@ public class ChartController {
      * @param request
      * @return
      */
-    /*@PostMapping("/gen")
-    public BaseResponse<BIResponse> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
+    @PostMapping("/genSync")
+    public BaseResponse<BIResponse> genChartByAISync(@RequestPart("file") MultipartFile multipartFile,
                                                  GenChartRequest genChartRequest, HttpServletRequest request) {
         String goal = genChartRequest.getGoal();
         String chartType = genChartRequest.getChartType();
@@ -281,6 +281,7 @@ public class ChartController {
         chart.setRawData(data);
         chart.setChartType(chartType);
         chart.setChartName(chartName);
+        chart.setStatus("succeeded");
         chart.setGenChart(genChart);
         chart.setGenSummary(genSummary);
         chart.setUserId(loginUser.getId());
@@ -292,7 +293,7 @@ public class ChartController {
         biResponse.setGenSummary(genSummary);
         biResponse.setChartId(chart.getId());
         return ResultUtils.success(biResponse);
-    }*/
+    }
 
 
     /**
@@ -303,8 +304,8 @@ public class ChartController {
      * @param request
      * @return
      */
-    /*@PostMapping("/gen")
-    public BaseResponse<BIResponse> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
+    /*@PostMapping("/genAsync")
+    public BaseResponse<BIResponse> genChartByAIAsync(@RequestPart("file") MultipartFile multipartFile,
                                                  GenChartRequest genChartRequest, HttpServletRequest request) {
         String goal = genChartRequest.getGoal();
         String chartType = genChartRequest.getChartType();
@@ -399,8 +400,8 @@ public class ChartController {
      * @param request
      * @return
      */
-    @PostMapping("/gen")
-    public BaseResponse<BIResponse> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
+    @PostMapping("/genAsync")
+    public BaseResponse<BIResponse> genChartByAIAsync(@RequestPart("file") MultipartFile multipartFile,
                                                  GenChartRequest genChartRequest, HttpServletRequest request) {
         String goal = genChartRequest.getGoal();
         String chartType = genChartRequest.getChartType();
